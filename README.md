@@ -8,7 +8,7 @@ Paper: https://arxiv.org/abs/2301.05217
 
 ## Experiments
 
-This repository contains two experiments:
+This repository contains three experiments:
 
 ### 1. Small Transformer Grokking (Root Directory)
 
@@ -23,6 +23,21 @@ Analyzes Qwen3 0.6B for emergent Fourier structure — and finds it! **R² = 0.9
 → **[See qwen3_analysis/README.md](qwen3_analysis/README.md)** for full details
 
 **Key finding**: Pretrained LLMs develop Fourier-like representations for arithmetic even without explicit training!
+
+### 3. Emergent Structures Across Domains (`emergent_structures/`)
+
+Probes Qwen3 for Fourier structure in other cyclic domains: days, months, hours, alphabet.
+
+→ **[See emergent_structures/README.md](emergent_structures/README.md)** for full details
+
+| Domain | Best Dim | R² |
+|--------|----------|-----|
+| **Days of week** | 125 | **0.9953** |
+| **Alphabet** | 238 | 0.9823 |
+| **Clock hours** | 725 | 0.9379 |
+| **Months** | 410 | 0.9288 |
+
+**Key finding**: The model has dedicated dimensions with near-perfect cyclic encodings for each domain!
 
 ---
 
@@ -129,14 +144,20 @@ grokking-fourier/
 ├── checkpoints_p71/       # Failed run (p=71)
 ├── checkpoints/           # Failed run (p=53)
 │
-└── qwen3_analysis/        # ← NEW: Pretrained LLM analysis
+├── qwen3_analysis/        # Pretrained LLM analysis (modular arithmetic)
+│   ├── README.md          # Full documentation of findings
+│   ├── analyze_qwen3.py   # Layer-by-layer Fourier analysis
+│   ├── analyze_deep.py    # Deep dive into specific dimensions
+│   ├── run.sh             # Basic analysis script
+│   ├── run_deep.sh        # Detailed analysis script
+│   ├── results/           # Layer scan results
+│   └── results_detailed/  # Deep analysis results (R²=0.9578!)
+│
+└── emergent_structures/   # Probing for Fourier structure in other domains
     ├── README.md          # Full documentation of findings
-    ├── analyze_qwen3.py   # Layer-by-layer Fourier analysis
-    ├── analyze_deep.py    # Deep dive into specific dimensions
-    ├── run.sh             # Basic analysis script
-    ├── run_deep.sh        # Detailed analysis script
-    ├── results/           # Layer scan results
-    └── results_detailed/  # Deep analysis results (R²=0.9578!)
+    ├── probe_structures.py # Analysis script for days, months, hours, etc.
+    ├── run.sh             # Run all experiments
+    └── results/           # All plots and results (R²=0.9953 for days!)
 ```
 
 ## References
