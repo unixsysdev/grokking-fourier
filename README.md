@@ -39,6 +39,22 @@ Probes Qwen3 for Fourier structure in other cyclic domains: days, months, hours,
 
 **Key finding**: The model has dedicated dimensions with near-perfect cyclic encodings for each domain!
 
+### 4. Prime Generalization Test (`emergent_structures/results_primes/`)
+
+Tests whether Fourier dimensions generalize across different primes, or are specialized.
+
+**Critical finding: SPECIALIZED, not dynamic!**
+
+| Prime Range | Best Dimension |
+|-------------|----------------|
+| p=7 | Dim 505 |
+| p=11 | Dim 112 |
+| p=13 | Dim 216 |
+| p=17-29 | **Dim 867** |
+| p=31 | Dim 463 |
+
+The model has a **lookup table of specialized circuits** for different primes, not a universal modular arithmetic unit. Dim 867 mysteriously handles medium primes (17-29).
+
 ---
 
 ## Small Transformer Experiment

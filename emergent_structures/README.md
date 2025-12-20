@@ -4,6 +4,8 @@ Probing for Fourier-like and other structured representations in pretrained LLMs
 
 ## 🎯 Key Findings
 
+### Cyclic Domain Encodings
+
 **Qwen3 has learned cyclic (Fourier) encodings for multiple domains!**
 
 | Domain | Best Dim | R² | Frequency | Notes |
@@ -15,17 +17,44 @@ Probing for Fourier-like and other structured representations in pretrained LLMs
 | **Alphabet (linear)** | 458 | 0.8907 | - | Linear position |
 | **Analogies** | - | 0.92 cos | rank ~24 | Parallelogram exists but noisy |
 
-### Comparison with Modular Arithmetic
+### 🔬 Prime Generalization Test
 
-| Experiment | Best R² | 
-|------------|---------|
-| Days of week | **0.9953** |
-| Alphabet | 0.9823 |
-| Modular arithmetic (from qwen3_analysis) | 0.9578 |
-| Clock hours | 0.9379 |
-| Months | 0.9288 |
+**Critical finding: The Fourier dimensions are SPECIALIZED, not dynamic!**
 
-**Days of the week has cleaner Fourier structure than modular arithmetic!** This makes sense — day names appear constantly in training text, while modular arithmetic is rare.
+We tested whether dimension 35 (which showed R²=0.96 for p=23) generalizes to other primes:
+
+| Prime | Dim 35 R² | Best Dim | Best R² |
+|-------|-----------|----------|---------|
+| 7 | 0.9855 | 505 | 0.9967 |
+| 11 | **0.5208** ❌ | 112 | 0.9499 |
+| 13 | **0.5207** ❌ | 216 | 0.9591 |
+| 17 | 0.8189 | **867** | 0.9664 |
+| 19 | 0.8479 | **867** | 0.9757 |
+| 23 | 0.8812 | **867** | 0.9678 |
+| 29 | 0.8763 | **867** | 0.9445 |
+| 31 | 0.9148 | 463 | 0.9402 |
+
+**Verdict: SPECIALIZED, not dynamic**
+
+- Dim 35 fails for p=11,13 (R² ≈ 0.52)
+- **Dim 867** dominates for medium primes (17-29)
+- Different small primes have different best dimensions
+- The model has a **lookup table of specialized circuits**, not a general-purpose modular arithmetic unit
+
+### What This Means
+
+```
+NOT this (dynamic):
+  Input: "a + b mod p" → [Universal Fourier Circuit] → cos(2π(a+b)/p)
+
+BUT this (specialized):
+  Input: "a + b mod 7"  → Dim 505 circuit → cos(2π(a+b)/7)
+  Input: "a + b mod 11" → Dim 112 circuit → cos(2π(a+b)/11)
+  Input: "a + b mod 17" → Dim 867 circuit → cos(2π(a+b)/17)
+  ...
+```
+
+The model learned **separate Fourier circuits for different prime ranges**, similar to how it has separate circuits for days (dim 125) vs months (dim 410).
 
 ## Interpretation
 
@@ -34,110 +63,87 @@ Probing for Fourier-like and other structured representations in pretrained LLMs
 The model has **dedicated dimensions** for each cyclic domain:
 
 ```
-Dim 35:  "What's (a+b) mod p?"     → cosine wave (period p)
 Dim 125: "What day is it?"         → cosine wave (period 7)
 Dim 238: "What letter position?"   → cosine wave (period 26)
 Dim 410: "What month?"             → cosine wave (period 12)
-Dim 458: "How far in alphabet?"    → linear ramp
 Dim 725: "What hour?"              → cosine wave (period 12)
+
+Dim 505: "mod 7 arithmetic"        → cosine wave (period 7)
+Dim 112: "mod 11 arithmetic"       → cosine wave (period 11)
+Dim 867: "mod 17-29 arithmetic"    → cosine wave (varies)
+Dim 463: "mod 31 arithmetic"       → cosine wave (period 31)
 ```
 
-### Why Fourier Bases Emerge
+### Why Specialized Rather Than Dynamic?
 
-Neural networks naturally discover that **periodic data is best encoded as sinusoids**:
+1. **Training distribution**: The model saw specific primes more often (7, 10, 12 from time/calendar, small primes from math)
+2. **No pressure to generalize**: Each prime is a separate "task" in training data
+3. **Easier to memorize**: Specialized circuits are simpler than a universal algorithm
+4. **Attention routing**: The model probably routes different primes to different circuits based on the value of p in the prompt
 
-1. Sinusoids are efficient (one dimension captures cycle position)
-2. Dot products between sinusoids give useful computations (trig identities)
-3. This emerges from gradient descent without explicit design
+### The Dim 867 Mystery
 
-### Analogies Are Harder
-
-Word analogies (king - man + woman ≈ queen) show:
-- High cosine similarity (0.92) — the direction is roughly right
-- But rank ~24 — many other words are closer
-
-Analogies require **relational** structure, which is harder than simple periodic encoding.
+Dimension 867 is interesting — it handles primes 17, 19, 23, 29 (but not 7, 11, 13, 31). This suggests:
+- It may have learned a "medium prime" circuit
+- Or these primes share some property that activates the same pathway
+- Worth investigating further!
 
 ## Experiments
 
 ### 1. Days of the Week (Period 7)
-
-**Prompt**: `"Monday + 3 days = "`
-
-Tests cyclic representations for day-of-week arithmetic.
-
-**Result**: R² = 0.9953 in dimension 125 — the model has an almost perfect 7-day clock!
+**Result**: R² = 0.9953 in dimension 125
 
 ### 2. Months of the Year (Period 12)
-
-**Prompt**: `"January + 5 months = "`
-
 **Result**: R² = 0.9288 in dimension 410
 
 ### 3. Clock Hours (Period 12)
-
-**Prompt**: `"3 o'clock + 5 hours = "`
-
 **Result**: R² = 0.9379 in dimension 725
 
 ### 4. Alphabet Position (Period 26)
+**Result**: R² = 0.9823 (cyclic), R² = 0.8907 (linear)
 
-**Prompts**: 
-- `"A + 3 letters = "` (cyclic) → R² = 0.9823 in dim 238
-- `"The 5th letter of the alphabet is "` (linear) → R² = 0.8907 in dim 458
+### 5. Word Analogies
+**Result**: Cosine similarity 0.92, average rank ~24
 
-The model has BOTH cyclic and linear alphabet encodings in different dimensions!
-
-### 5. Word Analogies (Parallelogram Structure)
-
-**Test**: king - man + woman ≈ queen
-
-| Analogy | Cosine Sim | Rank |
-|---------|------------|------|
-| king:queen::man:woman | 0.94 | 17 |
-| brother:sister::boy:girl | 0.96 | 3 |
-| husband:wife::uncle:aunt | 0.96 | 3 |
-| France:Paris::Japan:Tokyo | 0.91 | 14 |
-| walk:walked::run:ran | 0.94 | 13 |
-| see:saw::eat:ate | 0.95 | 6 |
-
-Some analogies work well (rank 3-6), others are noisier.
+### 6. Prime Generalization Test
+**Result**: Specialized circuits, not dynamic computation
 
 ## Running
 
 ```bash
+# Cyclic domain experiments
 ./run.sh
-```
 
-Or run specific experiments:
-
-```bash
-source ../venv/bin/activate
-python probe_structures.py --experiments "days,months"
-python probe_structures.py --experiments "analogies"
+# Prime generalization test
+./run_prime_test.sh
 ```
 
 ## Output Files
 
-Results are saved to `results/`:
+### Cyclic Experiments (`results/`)
+- `days_of_week.png`, `months.png`, `clock_hours.png`, `alphabet.png`
+- `analogies.png`, `results.json`
 
-| File | Description |
-|------|-------------|
-| `days_of_week.png` | Cyclic structure visualization |
-| `days_of_week_layers.png` | R² across all 28 layers |
-| `months.png` | Month cyclic structure |
-| `months_layers.png` | R² across layers |
-| `clock_hours.png` | Hour cyclic structure |
-| `clock_hours_layers.png` | R² across layers |
-| `alphabet.png` | Letter cyclic structure |
-| `alphabet_position.png` | Linear position encoding |
-| `analogies.png` | PCA visualization of word analogies |
-| `results.json` | Full numerical results |
+### Prime Generalization (`results_primes/`)
+- `dim35_across_primes.png` — Dim 35 cosine fits for each prime
+- `dim35_r2_by_prime.png` — Bar chart showing R² drops for some primes
+- `top_dims_per_prime.png` — Heatmap of which dims work for which primes
+- `results.json` — Full numerical results
 
 ## Conclusion
 
-**Fourier representations are a fundamental computational primitive that neural networks discover naturally.**
+**Fourier representations are fundamental, but specialized rather than universal.**
 
-The model learned separate "clocks" for days, months, hours, and alphabet positions — each in its own dedicated dimension. This supports the hypothesis from the grokking paper: periodic structure in data leads to sinusoidal encodings in neural networks.
+The model learned:
+1. **Separate "clocks"** for days, months, hours, alphabet
+2. **Separate arithmetic circuits** for different prime ranges
+3. **No general-purpose modular arithmetic** — it's more like a lookup table
 
-The fact that this emerges from general language modeling (not task-specific training) suggests it's a universal property of how neural networks represent cyclical information.
+This suggests LLMs develop **task-specific computational primitives** rather than universal algorithms. The Fourier structure is real, but it's instantiated separately for each domain the model encountered during training.
+
+### Future Questions
+
+1. **How does attention route** different primes to different dimensions?
+2. **Is dim 867 special?** Why does it handle primes 17-29?
+3. **Can fine-tuning unify** the specialized circuits into a universal one?
+4. **Do larger models** (7B, 70B) have more universal circuits?
