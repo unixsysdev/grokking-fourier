@@ -1,12 +1,34 @@
 # Grokking Fourier Analysis
 
-Replication of the Fourier analysis from:
+Replication and extension of the Fourier analysis from:
 
 **"Progress Measures for Grokking via Mechanistic Interpretability"**  
 Nanda et al., ICLR 2023  
 Paper: https://arxiv.org/abs/2301.05217
 
-## What this does
+## Experiments
+
+This repository contains two experiments:
+
+### 1. Small Transformer Grokking (Root Directory)
+
+Trains a 1-layer transformer from scratch on modular addition and analyzes the learned Fourier algorithm.
+
+→ [Jump to details](#small-transformer-experiment)
+
+### 2. Pretrained LLM Analysis (`qwen3_analysis/`)
+
+Analyzes Qwen3 0.6B for emergent Fourier structure — and finds it! **R² = 0.9578** for cosine fit in dimension 35.
+
+→ **[See qwen3_analysis/README.md](qwen3_analysis/README.md)** for full details
+
+**Key finding**: Pretrained LLMs develop Fourier-like representations for arithmetic even without explicit training!
+
+---
+
+## Small Transformer Experiment
+
+### What This Does
 
 Trains a small 1-layer transformer on modular addition (`a + b mod p`) and analyzes the learned algorithm using Fourier transforms.
 
@@ -15,9 +37,9 @@ The paper discovered that these networks learn a beautiful algorithm:
 2. Use trigonometric identities to compute `cos(wₖ(a+b))`
 3. Read off logits via `cos(wₖ(a+b-c))`, which peaks when `c = (a+b) mod p`
 
-## Experimental Results
+### Experimental Results
 
-### Successful Grokking (p=113)
+#### Successful Grokking (p=113)
 
 The model successfully grokked with the paper's original parameters:
 
@@ -34,7 +56,7 @@ The model successfully grokked with the paper's original parameters:
 
 The model learned a sparse Fourier representation with only 5 key frequencies (plus constant), exactly as the paper predicted. The 2D Fourier transform of the logits shows only 9 significant components.
 
-### Failed Runs (p=53, p=71)
+#### Failed Runs (p=53, p=71)
 
 Smaller primes did not grok with weight_decay=1.0:
 - p=53: Test accuracy stuck at ~1.3% after 15k epochs
@@ -42,7 +64,7 @@ Smaller primes did not grok with weight_decay=1.0:
 
 This matches the paper's finding that smaller primes require higher weight decay (λ=5.0) because the memorization solution is relatively cheaper.
 
-## Quick Start
+### Quick Start
 
 ```bash
 # Create virtual environment (first time only)
@@ -59,7 +81,7 @@ This will:
 2. Run Fourier analysis
 3. Generate plots in `analysis_p113/`
 
-## Manual Usage
+### Manual Usage
 
 ```bash
 source venv/bin/activate
@@ -71,14 +93,14 @@ python train.py --p 113 --n_epochs 25000 --output_dir my_checkpoints
 python analyze.py my_checkpoints/checkpoint_final.pt --output_dir my_analysis
 ```
 
-## Key Parameters
+### Key Parameters
 
 - `p`: Prime modulus (113 recommended, matches paper)
 - `train_frac`: Fraction of data for training (0.3 = 30%)
 - `weight_decay`: Crucial for grokking! (1.0 for p≥113, 5.0 for smaller primes)
 - `n_epochs`: Training epochs (grokking typically happens around 10k-15k)
 
-## Output Files
+### Output Files
 
 After running, check the analysis folder for:
 
@@ -91,19 +113,30 @@ After running, check the analysis folder for:
 | `attention_patterns.png` | Periodicity in attention heads |
 | `logits_2d_fourier.png` | 2D Fourier transform of output logits |
 
+---
+
 ## Repository Structure
 
 ```
 grokking-fourier/
-├── model.py           # One-layer transformer architecture
-├── train.py           # Training loop with AdamW + weight decay
-├── analyze.py         # Fourier analysis and plotting
-├── run.sh             # Quick run script
-├── checkpoints_p113/  # Trained model (p=113, successful grokking)
-├── analysis_p113/     # Fourier analysis plots
-├── checkpoints_p71/   # Failed run (p=71)
-├── checkpoints/       # Failed run (p=53)
-└── README.md
+├── README.md              # This file
+├── model.py               # One-layer transformer architecture
+├── train.py               # Training loop with AdamW + weight decay
+├── analyze.py             # Fourier analysis and plotting
+├── run.sh                 # Quick run script
+├── checkpoints_p113/      # Trained model (p=113, successful grokking)
+├── analysis_p113/         # Fourier analysis plots
+├── checkpoints_p71/       # Failed run (p=71)
+├── checkpoints/           # Failed run (p=53)
+│
+└── qwen3_analysis/        # ← NEW: Pretrained LLM analysis
+    ├── README.md          # Full documentation of findings
+    ├── analyze_qwen3.py   # Layer-by-layer Fourier analysis
+    ├── analyze_deep.py    # Deep dive into specific dimensions
+    ├── run.sh             # Basic analysis script
+    ├── run_deep.sh        # Detailed analysis script
+    ├── results/           # Layer scan results
+    └── results_detailed/  # Deep analysis results (R²=0.9578!)
 ```
 
 ## References
