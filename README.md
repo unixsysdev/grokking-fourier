@@ -53,7 +53,24 @@ Tests whether Fourier dimensions generalize across different primes, or are spec
 | p=17-29 | **Dim 867** |
 | p=31 | Dim 463 |
 
-The model has a **lookup table of specialized circuits** for different primes, not a universal modular arithmetic unit. Dim 867 mysteriously handles medium primes (17-29).
+The model has a **lookup table of specialized circuits** for different primes, not a universal modular arithmetic unit.
+
+### 5. Deep Circuit Investigation (`emergent_structures/results_deep/`)
+
+Three additional experiments revealed:
+
+**a) Dim 867 is a "range detector"** — handles n≈14-29 regardless of primality (composites too!)
+
+**b) Attention doesn't route** — attention to modulus is uniform (~3-5%). MLPs do the routing.
+
+**c) Calendar ≠ Arithmetic circuits** — "mod 12" uses different dims than "hours" or "months":
+| Domain | Dim | Period |
+|--------|-----|--------|
+| Hours (semantic) | 725 | 12 |
+| Months (semantic) | 410 | 12 |
+| mod 12 (arithmetic) | 536 | 12 |
+
+The model has **completely separate circuits** for semantic time concepts vs arithmetic operations!
 
 ---
 

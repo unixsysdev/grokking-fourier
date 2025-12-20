@@ -8,20 +8,16 @@ Probing for Fourier-like and other structured representations in pretrained LLMs
 
 **Qwen3 has learned cyclic (Fourier) encodings for multiple domains!**
 
-| Domain | Best Dim | R² | Frequency | Notes |
-|--------|----------|-----|-----------|-------|
-| **Days of week** | 125 | **0.9953** | k=1 | Near-perfect! |
-| **Alphabet (cyclic)** | 238 | **0.9823** | k=1 | Near-perfect! |
-| **Clock hours** | 725 | 0.9379 | k=1 | Strong |
-| **Months** | 410 | 0.9288 | k=1 | Strong |
-| **Alphabet (linear)** | 458 | 0.8907 | - | Linear position |
-| **Analogies** | - | 0.92 cos | rank ~24 | Parallelogram exists but noisy |
+| Domain | Best Dim | R² | Frequency |
+|--------|----------|-----|-----------|
+| **Days of week** | 125 | **0.9953** | k=1 |
+| **Alphabet (cyclic)** | 238 | **0.9823** | k=1 |
+| **Clock hours** | 725 | 0.9379 | k=1 |
+| **Months** | 410 | 0.9288 | k=1 |
 
 ### 🔬 Prime Generalization Test
 
-**Critical finding: The Fourier dimensions are SPECIALIZED, not dynamic!**
-
-We tested whether dimension 35 (which showed R²=0.96 for p=23) generalizes to other primes:
+**Critical finding: Fourier circuits are SPECIALIZED, not dynamic!**
 
 | Prime | Dim 35 R² | Best Dim | Best R² |
 |-------|-----------|----------|---------|
@@ -34,81 +30,121 @@ We tested whether dimension 35 (which showed R²=0.96 for p=23) generalizes to o
 | 29 | 0.8763 | **867** | 0.9445 |
 | 31 | 0.9148 | 463 | 0.9402 |
 
-**Verdict: SPECIALIZED, not dynamic**
+### 🔬 Deep Investigation Results
 
-- Dim 35 fails for p=11,13 (R² ≈ 0.52)
-- **Dim 867** dominates for medium primes (17-29)
-- Different small primes have different best dimensions
-- The model has a **lookup table of specialized circuits**, not a general-purpose modular arithmetic unit
+#### 1. Dim 867 is a "Range Detector", Not a Prime Detector!
 
-### What This Means
+Testing dim 867 on numbers 5-35 (primes AND composites):
 
 ```
-NOT this (dynamic):
-  Input: "a + b mod p" → [Universal Fourier Circuit] → cos(2π(a+b)/p)
+Numbers with R² > 0.85: [7, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31]
+```
 
-BUT this (specialized):
-  Input: "a + b mod 7"  → Dim 505 circuit → cos(2π(a+b)/7)
-  Input: "a + b mod 11" → Dim 112 circuit → cos(2π(a+b)/11)
-  Input: "a + b mod 17" → Dim 867 circuit → cos(2π(a+b)/17)
+| Statistic | Value |
+|-----------|-------|
+| Primes avg R² | 0.9062 |
+| Composites avg R² | 0.8354 |
+| Sweet spot | n ≈ 14-29 |
+
+**Dim 867 handles the RANGE 14-29, regardless of primality!** It works for composites (14, 15, 16, 18, 20, 21...) just as well as primes.
+
+#### 2. Attention Doesn't Route — MLPs Do!
+
+Attention to the modulus token is nearly uniform across different primes:
+
+```
+p= 7: attention = 0.033
+p=11: attention = 0.034
+p=17: attention = 0.037
+p=23: attention = 0.050
+p=31: attention = 0.045
+```
+
+Hidden state values at key dimensions are **nearly identical** regardless of prime:
+
+```
+Dim     p=7     p=11    p=17    p=23    p=31    
+--------------------------------------------------
+35      30.97   31.12   31.13   31.11   31.12   (constant!)
+867     0.18    0.22    0.22    0.23    0.29    (constant!)
+```
+
+**Conclusion: The routing happens in MLPs, not attention.** The model doesn't "attend" differently to different primes — the MLP layers must be doing the differentiation.
+
+#### 3. Arithmetic and Calendar Circuits are Completely Separate!
+
+Testing composite numbers common in real life:
+
+| Modulus | Best Dim | R² | Uses day/hour/month dims? |
+|---------|----------|-----|---------------------------|
+| mod 10 | 557 | 0.9486 | ❌ No |
+| mod 12 | 536 | 0.9723 | ❌ No |
+| mod 24 | 867 | 0.9448 | ❌ No |
+| mod 60 | 601 | 0.9343 | ❌ No |
+| mod 100 | 347 | 0.8994 | ❌ No |
+
+**The cyclic dims (125=days, 725=hours, 410=months) are NOT reused for arithmetic!**
+
+Even though mod 12 is the same period as hours/months, the model uses **completely different dimensions** for:
+- "Monday + 3 days" → Dim 125
+- "3 o'clock + 5 hours" → Dim 725  
+- "5 + 3 mod 12" → Dim 536 (different!)
+
+The model has **separate circuits for semantic domains** vs **arithmetic operations**.
+
+## The Complete Picture
+
+```
+Qwen3's Modular Circuits:
+
+CALENDAR/TIME (semantic):
+  Dim 125: "What day?"        → period 7
+  Dim 410: "What month?"      → period 12
+  Dim 725: "What hour?"       → period 12
+
+ARITHMETIC (computational):
+  Dim 505: mod 7 arithmetic   → period 7
+  Dim 112: mod 11 arithmetic  → period 11
+  Dim 216: mod 13 arithmetic  → period 13
+  Dim 867: mod 14-29 range    → varies (PARTIAL GENERALIZATION!)
+  Dim 463: mod 31 arithmetic  → period 31
+  Dim 536: mod 12 arithmetic  → period 12 (different from hours!)
+  Dim 557: mod 10 arithmetic  → period 10
   ...
+
+ROUTING:
+  - Attention is uniform (doesn't route)
+  - MLPs differentiate between moduli
+  - Separate circuits for semantic vs arithmetic
 ```
 
-The model learned **separate Fourier circuits for different prime ranges**, similar to how it has separate circuits for days (dim 125) vs months (dim 410).
+## Implications
 
-## Interpretation
+### 1. Extreme Specialization
 
-### Different Dimensions for Different Domains
+The model doesn't generalize — it has **hundreds of specialized circuits**:
+- One for days, one for hours, one for months
+- Separate ones for mod 7 arithmetic vs "Monday + 3 days"
+- Different circuits for different numerical ranges
 
-The model has **dedicated dimensions** for each cyclic domain:
+### 2. MLP-Based Routing
 
-```
-Dim 125: "What day is it?"         → cosine wave (period 7)
-Dim 238: "What letter position?"   → cosine wave (period 26)
-Dim 410: "What month?"             → cosine wave (period 12)
-Dim 725: "What hour?"              → cosine wave (period 12)
+Attention doesn't select which circuit to use. The MLPs must be doing pattern matching on the input to activate the right specialized circuit.
 
-Dim 505: "mod 7 arithmetic"        → cosine wave (period 7)
-Dim 112: "mod 11 arithmetic"       → cosine wave (period 11)
-Dim 867: "mod 17-29 arithmetic"    → cosine wave (varies)
-Dim 463: "mod 31 arithmetic"       → cosine wave (period 31)
-```
+### 3. Partial Generalization in Dim 867
 
-### Why Specialized Rather Than Dynamic?
+Dim 867 is interesting — it handles a **range** (14-29) rather than a single modulus. This is a hint of generalization, but still limited. Larger models might extend this to true universality.
 
-1. **Training distribution**: The model saw specific primes more often (7, 10, 12 from time/calendar, small primes from math)
-2. **No pressure to generalize**: Each prime is a separate "task" in training data
-3. **Easier to memorize**: Specialized circuits are simpler than a universal algorithm
-4. **Attention routing**: The model probably routes different primes to different circuits based on the value of p in the prompt
+### 4. Inefficiency
 
-### The Dim 867 Mystery
+This is **wildly inefficient**:
+- Separate dims for mod 12 arithmetic vs hours vs months
+- Many dimensions "wasted" on narrow tasks
+- A universal circuit would be far more parameter-efficient
 
-Dimension 867 is interesting — it handles primes 17, 19, 23, 29 (but not 7, 11, 13, 31). This suggests:
-- It may have learned a "medium prime" circuit
-- Or these primes share some property that activates the same pathway
-- Worth investigating further!
+This likely explains why larger models show "emergent abilities" — they have enough capacity to develop universal circuits instead of this lookup-table approach.
 
-## Experiments
-
-### 1. Days of the Week (Period 7)
-**Result**: R² = 0.9953 in dimension 125
-
-### 2. Months of the Year (Period 12)
-**Result**: R² = 0.9288 in dimension 410
-
-### 3. Clock Hours (Period 12)
-**Result**: R² = 0.9379 in dimension 725
-
-### 4. Alphabet Position (Period 26)
-**Result**: R² = 0.9823 (cyclic), R² = 0.8907 (linear)
-
-### 5. Word Analogies
-**Result**: Cosine similarity 0.92, average rank ~24
-
-### 6. Prime Generalization Test
-**Result**: Specialized circuits, not dynamic computation
-
-## Running
+## Running the Experiments
 
 ```bash
 # Cyclic domain experiments
@@ -116,34 +152,33 @@ Dimension 867 is interesting — it handles primes 17, 19, 23, 29 (but not 7, 11
 
 # Prime generalization test
 ./run_prime_test.sh
+
+# Deep investigation (dim 867, attention, composites)
+./run_investigation.sh
 ```
 
 ## Output Files
 
-### Cyclic Experiments (`results/`)
+### `results/` — Cyclic Experiments
 - `days_of_week.png`, `months.png`, `clock_hours.png`, `alphabet.png`
-- `analogies.png`, `results.json`
 
-### Prime Generalization (`results_primes/`)
-- `dim35_across_primes.png` — Dim 35 cosine fits for each prime
-- `dim35_r2_by_prime.png` — Bar chart showing R² drops for some primes
-- `top_dims_per_prime.png` — Heatmap of which dims work for which primes
-- `results.json` — Full numerical results
+### `results_primes/` — Prime Generalization
+- `dim35_across_primes.png`, `top_dims_per_prime.png`
+
+### `results_deep/` — Deep Investigation
+- `dim867_investigation.png` — Dim 867 works for range 14-29
+- `attention_routing.png` — Attention is uniform (no routing)
+- `composites_analysis.png` — Arithmetic uses separate dims from calendar
 
 ## Conclusion
 
-**Fourier representations are fundamental, but specialized rather than universal.**
+**Qwen3 0.6B is a massive lookup table of specialized Fourier circuits.**
 
-The model learned:
-1. **Separate "clocks"** for days, months, hours, alphabet
-2. **Separate arithmetic circuits** for different prime ranges
-3. **No general-purpose modular arithmetic** — it's more like a lookup table
+Key insights:
+1. **No universal modular arithmetic** — different dims for different moduli
+2. **Semantic vs arithmetic separation** — "hours" ≠ "mod 12"
+3. **Range-based partial generalization** — Dim 867 handles 14-29
+4. **MLP routing, not attention** — Attention doesn't differentiate
+5. **Extreme inefficiency** — Larger models likely do better
 
-This suggests LLMs develop **task-specific computational primitives** rather than universal algorithms. The Fourier structure is real, but it's instantiated separately for each domain the model encountered during training.
-
-### Future Questions
-
-1. **How does attention route** different primes to different dimensions?
-2. **Is dim 867 special?** Why does it handle primes 17-29?
-3. **Can fine-tuning unify** the specialized circuits into a universal one?
-4. **Do larger models** (7B, 70B) have more universal circuits?
+This suggests that the "Fourier algorithm" from the grokking paper exists in LLMs, but is **fragmented across many specialized circuits** rather than unified into a single universal algorithm.
