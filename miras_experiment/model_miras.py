@@ -111,21 +111,23 @@ class UniversalFourierTransformer(nn.Module):
         eq_token = self.max_p + 1
         
         # 1. Embed special tokens (a, b, =)
-        # Note: Position 0 is 'p' but we will overwrite it
-        dummy_tokens = torch.zeros((batch_size, 4), dtype=torch.long, device=device)
-        dummy_tokens[:, 1] = a
-        dummy_tokens[:, 2] = b
-        dummy_tokens[:, 3] = eq_token
-        
-        x = self.token_embed(dummy_tokens) + self.pos_embed(torch.arange(4, device=device))
+        # We only really need a, b, = embeddings
+        tokens_abc = torch.stack([a, b, torch.full_like(a, eq_token)], dim=1)
+        x_abc = self.token_embed(tokens_abc) + self.pos_embed(torch.arange(1, 4, device=device))
         
         # 2. Inject Sinusoidal Prime Encoding at position 0
-        p_enc = self.p_embedder(p_val)
-        x[:, 0, :] = p_enc
+        p_enc = self.p_embedder(p_val).unsqueeze(1) # (batch, 1, d_model)
+        p_enc = p_enc + self.pos_embed(torch.zeros(1, dtype=torch.long, device=device))
+        
+        # Concat prime with the rest
+        x = torch.cat([p_enc, x_abc], dim=1) # (batch, 4, d_model)
         
         # 3. Update the representation of token 'p' via Neural Memory
         z_p = self.memory_block(x[:, 0, :])
-        x[:, 0, :] = self.mem_to_hidden(z_p)
+        
+        # Replace only position 0 with memory output
+        p_hidden = self.mem_to_hidden(z_p).unsqueeze(1)
+        x = torch.cat([p_hidden, x[:, 1:, :]], dim=1)
         
         # 4. Two Transformer layers
         x = self.layer1(x)
