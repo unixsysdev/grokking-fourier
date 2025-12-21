@@ -93,22 +93,49 @@ The model has **completely separate circuits** for semantic time concepts vs ari
 
 ### 9. Universal MIRAS Grokking (`miras_experiment/`)
 
-Our most advanced experiment, achieving **Universal Generalization** and **Infinite Extrapolation** using MIRAS (Memory-Integrated Recurrent Attention Structures).
+Our most advanced experiment, achieving **True Generalization** via Sinusoidal Modulus Encoding (SinPE).
 
-**Key discovery: The model has evolved from a "Lookup Table" of circuits into a "Universal Oscillator"!**
+#### Phase 2: SinPE on Primes (Original)
 
-| Metric | Previous (Discrete) | **Current (SinPE + MIRAS)** |
-|--------|---------------------|-----------------------------|
-| Seen Mastery | 100% | 100% |
-| **Unseen Mastery (p=71)** | ~0% | **67.5% (Growing)** |
-| **Extrapolation (p=101)** | 0% | **~11% (Softened Cliff)** |
-| Mechanism | Linear Table | **Adaptive Sine Waves** |
+| Metric | Previous (Discrete) | SinPE |
+|--------|---------------------|-------|
+| Seen Primes | 100% | 100% |
+| Unseen (p=71) | ~0% | **67.5%** |
+| Extrapolation (p=101) | 0% | **~11%** |
 
-**Breakthroughs**:
-- **Sinoidal Modulus Encoding (SinPE)**: Allows the model to perceive the modulus $p$ as a continuous scalar, enabling it to adjust its internal rotation frequency on-the-fly.
-- **Universal Neurons**: Identified "Universal Oscillators" (e.g., Neuron 129) that stay active across all primes, automatically "stretching" their periodicity to fit the given $p$.
+#### Phase 3: Universal Training (Breakthrough!)
 
-→ **[See miras_experiment/README.md](miras_experiment/README.md)** for full details on Infinite Grokking.
+Trained on **ALL moduli 2-120** (not just primes), with held-out moduli for testing true generalization.
+
+**Interpolation (held-out, never trained):**
+| Modulus | Accuracy |
+|---------|----------|
+| m=15, 25, 35, 45, 55, 65, 75, 85, 95, 105 | **100%** |
+| m=115 | **99.8%** |
+
+**Extrapolation (beyond training range):**
+| Modulus | Accuracy |
+|---------|----------|
+| m=121 | **91.6%** |
+| m=124 | **69.6%** |
+| m=149 | 26.2% |
+| m=199 | 17.3% |
+
+**Key Findings:**
+- ✅ **SinPE enables true generalization** - 100% on held-out moduli within range
+- ✅ **Fourier structure extends beyond training** - clean patterns even for m=121
+- ❌ **Hard extrapolation ceiling** - accuracy cliff at m≈124
+- ❌ **SinPE resolution limits** - adjacent large moduli hard to distinguish
+
+**Mechanistic Evidence:**
+
+![Extrapolation Decay Curve](miras_experiment/analysis/compendium/universal_e130000/extrapolation_decay_curve.png)
+
+The model develops clean Fourier representations that generalize:
+
+![Fourier Structure m=95](miras_experiment/analysis/compendium/universal_e130000/fourier_mod_95.png)
+
+→ **[See miras_experiment/README.md](miras_experiment/README.md)** for full details, analysis plots, and usage guide.
 
 ---
 
@@ -224,14 +251,34 @@ grokking-fourier/
 │   ├── results/           # Layer scan results
 │   └── results_detailed/  # Deep analysis results (R²=0.9578!)
 │
-└── miras_experiment/       # ACHIEVED: Universal Grokking & Infinite Extrapolation
-    ├── README.md          # Full documentation of Phase 2 breakthroughs
-    ├── model_miras.py     # SinPE architecture with TitansMemory
-    ├── train_ce.py        # Supervised "Grokking Leap" track
-    ├── train_rl.py        # Policy Gradient discovery track
-    ├── sweep_accuracy.py  # All-prime accuracy evaluator
-    ├── analyze_miras_mechanics.py # Nanda-style SNR and Fourier purity analysis
-    └── analysis/          # Extrapolation plots and Fourier "Heartbeats"
+├── emergent_structures/   # Multi-domain probing experiments
+│   ├── README.md
+│   ├── probe_structures.py
+│   ├── causal_ablation.py
+│   ├── sae_analysis/      # Sparse autoencoder analysis
+│   └── results_*/         # Various analysis results
+│
+└── miras_experiment/      # ★ MAIN EXPERIMENT: Universal Grokking ★
+    ├── README.md          # Comprehensive documentation
+    ├── model_miras.py     # SinPE + TitansMemory architecture
+    │
+    ├── train_ce.py        # Cross-entropy training (primes)
+    ├── train_rl.py        # Policy gradient training (primes)
+    ├── train_ce_universal.py  # Universal training (all moduli) ★
+    │
+    ├── sweep_accuracy.py      # Accuracy evaluation
+    ├── generate_compendium.py # Generate analysis plots
+    ├── analyze_miras_mechanics.py
+    │
+    ├── checkpoints/
+    │   ├── ce_sinpe/      # CE model checkpoints
+    │   ├── rl_sinpe/      # RL model checkpoints
+    │   └── ce_universal/  # Universal model checkpoints ★
+    │
+    └── analysis/
+        └── compendium/    # Analysis plots per checkpoint
+            ├── universal_e130000/  # Best universal results ★
+            └── ...
 ```
 
 ## References

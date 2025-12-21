@@ -21,7 +21,7 @@ def generate_multi_prime_data(primes, samples_per_prime=1000):
     random.shuffle(all_data)
     return all_data
 
-def train_rl():
+def train_rl(resume: bool = False, checkpoint: str = None, start_epoch: int = 0, n_epochs: int = 100000):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"--- Training SIN-PE Policy Gradient (RL) on: {device} ---")
     
@@ -33,19 +33,58 @@ def train_rl():
 
     model = UniversalFourierTransformer(max_p=150, d_model=128, d_mem=128).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=5e-4, weight_decay=1.0)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100000)
     
-    output_path = Path("miras_experiment/checkpoints/rl_sinpe")
+    output_path = Path("checkpoints/rl_sinpe")
     output_path.mkdir(parents=True, exist_ok=True)
     
     history = {"epoch": [], "avg_reward": [], "unseen_acc": []}
-    
-    batch_size = 512
-    n_epochs = 100000
-    pbar = tqdm(range(n_epochs), desc="RL SinPE Training")
-    
     running_reward = 0.0
     beta_entropy = 0.01
+    
+    # Resume from full training state
+    checkpoint_path = output_path / "training_state.pt"
+    if resume and checkpoint_path.exists():
+        print(f"Resuming from {checkpoint_path}...")
+        ckpt = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(ckpt["model"])
+        optimizer.load_state_dict(ckpt["optimizer"])
+        history = ckpt["history"]
+        start_epoch = ckpt["epoch"] + 1
+        running_reward = ckpt["running_reward"]
+        print(f"Resumed at epoch {start_epoch}, running_reward: {running_reward:.3f}")
+    elif resume:
+        print("No training_state.pt found, starting fresh...")
+    
+    # Load model weights only (for continuing from old checkpoints)
+    if checkpoint:
+        print(f"Loading model weights from {checkpoint}...")
+        ckpt = torch.load(checkpoint, map_location=device)
+        # Handle both old format (just state_dict) and new format (dict with "model" key)
+        if "model" in ckpt:
+            model.load_state_dict(ckpt["model"])
+            if "running_reward" in ckpt:
+                running_reward = ckpt["running_reward"]
+        else:
+            model.load_state_dict(ckpt)
+        # Load existing history if available
+        history_path = output_path / "history.json"
+        if history_path.exists():
+            with open(history_path) as f:
+                history = json.load(f)
+            print(f"Loaded history with {len(history['epoch'])} entries")
+            # Estimate running_reward from history if available
+            if history["avg_reward"]:
+                running_reward = history["avg_reward"][-1]
+                print(f"Estimated running_reward from history: {running_reward:.3f}")
+        print(f"Starting from epoch {start_epoch} with fresh optimizer")
+    
+    # Create scheduler with appropriate T_max (remaining epochs)
+    remaining_epochs = n_epochs - start_epoch
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=remaining_epochs)
+    print(f"Training from epoch {start_epoch} to {n_epochs} ({remaining_epochs} epochs, LR: {scheduler.get_last_lr()[0]:.2e})")
+    
+    batch_size = 512
+    pbar = tqdm(range(start_epoch, n_epochs), desc="RL SinPE Training")
 
     for epoch in pbar:
         model.train()
@@ -102,14 +141,39 @@ def train_rl():
                 history["epoch"].append(epoch)
                 history["avg_reward"].append(batch_avg_reward)
                 history["unseen_acc"].append(u_acc)
-                pbar.set_postfix({"R": f"{batch_avg_reward:.2f}", "U": f"{u_acc:.1%}"})
+                pbar.set_postfix({"R": f"{batch_avg_reward:.2f}", "U": f"{u_acc:.1%}", "LR": f"{scheduler.get_last_lr()[0]:.1e}"})
                 
                 if epoch % 5000 == 0:
                     torch.save(model.state_dict(), output_path / f"rl_e{epoch}.pt")
+                    # Save full training state for resume
+                    torch.save({
+                        "epoch": epoch,
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "scheduler": scheduler.state_dict(),
+                        "history": history,
+                        "running_reward": running_reward,
+                    }, checkpoint_path)
                     with open(output_path / "history.json", "w") as f:
                         json.dump(history, f)
 
     torch.save(model.state_dict(), output_path / "rl_final.pt")
+    # Save final training state
+    torch.save({
+        "epoch": n_epochs - 1,
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "scheduler": scheduler.state_dict(),
+        "history": history,
+        "running_reward": running_reward,
+    }, checkpoint_path)
 
 if __name__ == "__main__":
-    train_rl()
+    import argparse
+    parser = argparse.ArgumentParser(description="Train RL model with optional resume")
+    parser.add_argument("--resume", action="store_true", help="Resume from training_state.pt (full state)")
+    parser.add_argument("--checkpoint", type=str, help="Load model weights from a .pt file (fresh optimizer)")
+    parser.add_argument("--start_epoch", type=int, default=0, help="Starting epoch (use with --checkpoint)")
+    parser.add_argument("--n_epochs", type=int, default=100000, help="Total epochs to train")
+    args = parser.parse_args()
+    train_rl(resume=args.resume, checkpoint=args.checkpoint, start_epoch=args.start_epoch, n_epochs=args.n_epochs)

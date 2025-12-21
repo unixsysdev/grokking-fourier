@@ -21,7 +21,7 @@ def generate_multi_prime_data(primes, samples_per_prime=1000):
     random.shuffle(all_data)
     return all_data
 
-def train_ce():
+def train_ce(resume: bool = False, checkpoint: str = None, start_epoch: int = 0, n_epochs: int = 100000):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"--- Training SIN-PE Cross-Entropy on: {device} ---")
     
@@ -33,17 +33,50 @@ def train_ce():
 
     model = UniversalFourierTransformer(max_p=150, d_model=128, d_mem=128).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1.0)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100000)
     criterion = nn.CrossEntropyLoss()
     
-    output_path = Path("miras_experiment/checkpoints/ce_sinpe")
+    output_path = Path("checkpoints/ce_sinpe")
     output_path.mkdir(parents=True, exist_ok=True)
     
     history = {"epoch": [], "train_loss": [], "unseen_acc": []}
     
+    # Resume from full training state
+    checkpoint_path = output_path / "training_state.pt"
+    if resume and checkpoint_path.exists():
+        print(f"Resuming from {checkpoint_path}...")
+        ckpt = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(ckpt["model"])
+        optimizer.load_state_dict(ckpt["optimizer"])
+        history = ckpt["history"]
+        start_epoch = ckpt["epoch"] + 1
+        print(f"Resumed at epoch {start_epoch}")
+    elif resume:
+        print("No training_state.pt found, starting fresh...")
+    
+    # Load model weights only (for continuing from old checkpoints)
+    if checkpoint:
+        print(f"Loading model weights from {checkpoint}...")
+        ckpt = torch.load(checkpoint, map_location=device)
+        # Handle both old format (just state_dict) and new format (dict with "model" key)
+        if "model" in ckpt:
+            model.load_state_dict(ckpt["model"])
+        else:
+            model.load_state_dict(ckpt)
+        # Load existing history if available
+        history_path = output_path / "history.json"
+        if history_path.exists():
+            with open(history_path) as f:
+                history = json.load(f)
+            print(f"Loaded history with {len(history['epoch'])} entries")
+        print(f"Starting from epoch {start_epoch} with fresh optimizer")
+    
+    # Create scheduler with appropriate T_max (remaining epochs)
+    remaining_epochs = n_epochs - start_epoch
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=remaining_epochs)
+    print(f"Training from epoch {start_epoch} to {n_epochs} ({remaining_epochs} epochs, LR: {scheduler.get_last_lr()[0]:.2e})")
+    
     batch_size = 1024
-    n_epochs = 100000
-    pbar = tqdm(range(n_epochs), desc="CE SinPE Training")
+    pbar = tqdm(range(start_epoch, n_epochs), desc="CE SinPE Training")
     
     for epoch in pbar:
         model.train()
@@ -82,14 +115,37 @@ def train_ce():
                 history["epoch"].append(epoch)
                 history["train_loss"].append(loss.item())
                 history["unseen_acc"].append(u_acc)
-                pbar.set_postfix({"L": f"{loss.item():.4f}", "U": f"{u_acc:.1%}"})
+                pbar.set_postfix({"L": f"{loss.item():.4f}", "U": f"{u_acc:.1%}", "LR": f"{scheduler.get_last_lr()[0]:.1e}"})
                 
                 if epoch % 5000 == 0:
                     torch.save(model.state_dict(), output_path / f"ce_e{epoch}.pt")
+                    # Save full training state for resume
+                    torch.save({
+                        "epoch": epoch,
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "scheduler": scheduler.state_dict(),
+                        "history": history,
+                    }, checkpoint_path)
                     with open(output_path / "history.json", "w") as f:
                         json.dump(history, f)
 
     torch.save(model.state_dict(), output_path / "ce_final.pt")
+    # Save final training state
+    torch.save({
+        "epoch": n_epochs - 1,
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "scheduler": scheduler.state_dict(),
+        "history": history,
+    }, checkpoint_path)
 
 if __name__ == "__main__":
-    train_ce()
+    import argparse
+    parser = argparse.ArgumentParser(description="Train CE model with optional resume")
+    parser.add_argument("--resume", action="store_true", help="Resume from training_state.pt (full state)")
+    parser.add_argument("--checkpoint", type=str, help="Load model weights from a .pt file (fresh optimizer)")
+    parser.add_argument("--start_epoch", type=int, default=0, help="Starting epoch (use with --checkpoint)")
+    parser.add_argument("--n_epochs", type=int, default=100000, help="Total epochs to train")
+    args = parser.parse_args()
+    train_ce(resume=args.resume, checkpoint=args.checkpoint, start_epoch=args.start_epoch, n_epochs=args.n_epochs)

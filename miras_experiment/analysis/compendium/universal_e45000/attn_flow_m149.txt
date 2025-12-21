@@ -1,0 +1,2 @@
+Layer 1 Modulus Attn: 0.2486
+Layer 2 Modulus Attn: 0.2235
