@@ -1,0 +1,52 @@
+[
+  {
+    "dim": 35,
+    "layer": 9,
+    "base_acc": 0.28,
+    "ablated_acc": 0.04,
+    "acc_drop": 0.24000000000000002,
+    "base_ppl": 18.812353085540217,
+    "ablated_ppl": 408.45841311167607,
+    "ppl_increase_pct": 2071.224467531552
+  },
+  {
+    "dim": 867,
+    "layer": 14,
+    "base_acc": 0.28,
+    "ablated_acc": 0.28,
+    "acc_drop": 0.0,
+    "base_ppl": 18.812353085540217,
+    "ablated_ppl": 18.763480070102652,
+    "ppl_increase_pct": -0.25979214410519375
+  },
+  {
+    "dim": 8,
+    "layer": 7,
+    "base_acc": 0.28,
+    "ablated_acc": 0.12,
+    "acc_drop": 0.16000000000000003,
+    "base_ppl": 18.812353085540217,
+    "ablated_ppl": 18.397502679291268,
+    "ppl_increase_pct": -2.205202105034995
+  },
+  {
+    "dim": 100,
+    "layer": 14,
+    "base_acc": 0.28,
+    "ablated_acc": 0.28,
+    "acc_drop": 0.0,
+    "base_ppl": 18.812353085540217,
+    "ablated_ppl": 18.766717309249398,
+    "ppl_increase_pct": -0.24258409399032696
+  },
+  {
+    "dim": 500,
+    "layer": 9,
+    "base_acc": 0.28,
+    "ablated_acc": 0.28,
+    "acc_drop": 0.0,
+    "base_ppl": 18.812353085540217,
+    "ablated_ppl": 18.803829724371464,
+    "ppl_increase_pct": -0.04530725704539006
+  }
+]

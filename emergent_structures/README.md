@@ -27,6 +27,18 @@ To ensure the "Fourier" results aren't just artifacts of small sample sizes or l
 
 **Interpretation**: The near-zero linear $R^2$ values for Dimension 35 prove it is NOT a magnitude detector (ReLU-friendly). It has "abandoned" the linear number line for a periodic one that corresponds to the cyclic nature of modular addition.
 
+### 🧪 Causal Ablation Validation
+
+We verified the causality of these dimensions by zeroing them out during inference using PyTorch hooks.
+
+| Dimension | Role | Arith Acc Drop | Text PPL Change | Result |
+|-----------|------|----------------|-----------------|--------|
+| **35 (L9)** | Core Numerical Bridge | **-24%** | +2071% (Crash) | Critical Bottleneck |
+| **8 (L7)** | Specialized Arithmetic | **-16%** | -2.2% (No Impact) | **Causal Proof** |
+| 100 (L14)| Control Dim | 0% | 0% | No Effect |
+
+→ **[See causal_ablation.py](causal_ablation.py)** for implementation details.
+
 ### 🔬 Prime Generalization Test
 
 **Critical finding: Fourier circuits are SPECIALIZED, not dynamic!**

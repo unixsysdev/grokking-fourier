@@ -41,6 +41,17 @@ A methodological deep-dive proving that the model's representations are truly cy
 
 → **[See emergent_structures/detect_polynomial_functions.py](emergent_structures/detect_polynomial_functions.py)** for the robust detection methodology.
 
+### 5. Causal Ablation Experiment (`emergent_structures/causal_ablation.py`)
+
+Causally proves that identified dimensions are responsible for the model's arithmetic capabilities.
+
+**Key discovery**: Zeroing out **Dimension 8 (Layer 7)** drops arithmetic accuracy by **16%** while leaving general language generation completely intact, proving its specialized nature.
+
+| Metric | Baseline | Ablated (Dim 8) | Status |
+|--------|----------|-----------------|--------|
+| Arith Acc | 28% | **12%** | **Causally Linked** |
+| Language PPL | 18.81 | 18.39 | **Specialized** |
+
 ### 4. Prime Generalization Test (`emergent_structures/results_primes/`)
 
 Tests whether Fourier dimensions generalize across different primes, or are specialized.
