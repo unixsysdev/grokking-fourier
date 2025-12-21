@@ -4,19 +4,29 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import argparse
 from model_miras import UniversalFourierTransformer
+from model_sparse import SparseUniversalTransformer
 import analyze_miras_mechanics as analyze
 import visualize_adaptation as adapt
 import tqdm
 
 def generate_compendium(mode, epoch, device):
-    # Handle universal mode
-    if mode == "universal":
-        base_check_dir = Path(f"checkpoints/ce_universal")
+    # Handle different modes
+    if mode == "sparse":
+        base_check_dir = Path("checkpoints/ce_sparse")
+        path_options = [
+            base_check_dir / f"sparse_{epoch}.pt",
+            base_check_dir / f"sparse_e{epoch}.pt"
+        ]
+        max_p, d_model, n_heads, d_mlp, d_mem = 250, 256, 8, 1024, 256
+        use_sparse_model = True
+    elif mode == "universal":
+        base_check_dir = Path("checkpoints/ce_universal")
         path_options = [
             base_check_dir / f"universal_{epoch}.pt",
             base_check_dir / f"universal_e{epoch}.pt"
         ]
         max_p, d_model, n_heads, d_mlp, d_mem = 200, 256, 8, 1024, 256
+        use_sparse_model = False
     else:
         base_check_dir = Path(f"checkpoints/{mode}_sinpe")
         path_options = [
@@ -24,6 +34,7 @@ def generate_compendium(mode, epoch, device):
             base_check_dir / f"{mode}_e{epoch}.pt"
         ]
         max_p, d_model, n_heads, d_mlp, d_mem = 150, 128, 4, 512, 128
+        use_sparse_model = False
     
     checkpoint_path = None
     for p in path_options:
@@ -41,24 +52,29 @@ def generate_compendium(mode, epoch, device):
     print(f"--- Generating Compendium for {mode} {epoch} ---")
     
     # 1. Load Model
-    model = UniversalFourierTransformer(max_p=max_p, d_model=d_model, n_heads=n_heads, d_mlp=d_mlp, d_mem=d_mem).to(device)
+    if use_sparse_model:
+        model = SparseUniversalTransformer(max_p=max_p, d_model=d_model, n_heads=n_heads, d_mlp=d_mlp, d_mem=d_mem).to(device)
+    else:
+        model = UniversalFourierTransformer(max_p=max_p, d_model=d_model, n_heads=n_heads, d_mlp=d_mlp, d_mem=d_mem).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
 
-    # 2. Fourier & Nanda Plots (Seen, Unseen, Extrapolation)
-    if mode == "universal":
-        # Test interpolation and extrapolation for universal model
-        test_moduli = [13, 45, 95, 121, 149]  # mix of train range, held-out, and extrapolation
+    # 2. Fourier & Nanda Plots
+    if mode == "sparse":
+        # Test both training moduli and interpolation
+        test_moduli = [13, 50, 85, 120, 150, 180]  # Mix of train and held-out
+    elif mode == "universal":
+        test_moduli = [13, 45, 95, 121, 149]
     else:
         test_moduli = [13, 71, 101]
         
     for p in test_moduli:
         print(f"Analyzing m={p}...")
         
-        # 2D Fourier (takes model, p, device, output_dir)
+        # 2D Fourier
         analyze.plot_fourier_analysis(model, p, device, output_dir)
         
-        # 1D Nanda Signal (takes model, p, device, output_dir)
+        # 1D Nanda Signal
         analyze.plot_activation_vs_sum(model, p, device, output_dir)
         
         # Attention Flow
@@ -69,10 +85,12 @@ def generate_compendium(mode, epoch, device):
             f.write(f"Layer 1 Modulus Attn: {avg_l1:.4f}\n")
             f.write(f"Layer 2 Modulus Attn: {avg_l2:.4f}\n")
 
-    # 3. Neuron Adaptation (Cross-Prime)
+    # 3. Neuron Adaptation
     print("Generating Neuron Adaptation plots...")
-    if mode == "universal":
-        adapt_moduli = [11, 25, 50, 100]  # mix for universal
+    if mode == "sparse":
+        adapt_moduli = [11, 50, 100, 150]
+    elif mode == "universal":
+        adapt_moduli = [11, 25, 50, 100]
     else:
         adapt_moduli = [11, 17, 23, 31]
     prime_top = adapt.find_top_fourier_overlap(model, adapt_moduli, device)
@@ -92,7 +110,7 @@ def generate_compendium(mode, epoch, device):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["ce", "rl", "universal"])
+    parser.add_argument("mode", choices=["ce", "rl", "universal", "sparse"])
     parser.add_argument("epoch", type=str)
     args = parser.parse_args()
     

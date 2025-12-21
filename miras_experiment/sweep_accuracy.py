@@ -1,5 +1,6 @@
 import torch
 from model_miras import UniversalFourierTransformer
+from model_sparse import SparseUniversalTransformer
 from pathlib import Path
 import json
 
@@ -14,18 +15,24 @@ def get_accuracy(model, p, device):
         acc = (logits.argmax(dim=-1) == (a_vals + b_vals) % p).float().mean().item()
     return acc
 
-def sweep_all(mode="ce", epoch="40000", universal=False):
+def sweep_all(mode="ce", epoch="40000", universal=False, sparse=False):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     
-    if universal:
+    if sparse:
+        base_check_dir = Path("checkpoints/ce_sparse")
+        path_options = [
+            base_check_dir / f"sparse_{epoch}.pt",
+            base_check_dir / f"sparse_e{epoch}.pt"
+        ]
+        model = SparseUniversalTransformer(max_p=250, d_model=256, n_heads=8, d_mlp=1024, d_mem=256).to(device)
+        test_moduli = list(range(2, 200))
+    elif universal:
         base_check_dir = Path("checkpoints/ce_universal")
         path_options = [
             base_check_dir / f"universal_{epoch}.pt",
             base_check_dir / f"universal_e{epoch}.pt"
         ]
-        # Larger model for universal
         model = UniversalFourierTransformer(max_p=200, d_model=256, n_heads=8, d_mlp=1024, d_mem=256).to(device)
-        # Test all moduli for universal
         test_moduli = list(range(2, 200))
     else:
         base_check_dir = Path(f"checkpoints/{mode}_sinpe")
@@ -34,7 +41,6 @@ def sweep_all(mode="ce", epoch="40000", universal=False):
             base_check_dir / f"{mode}_e{epoch}.pt"
         ]
         model = UniversalFourierTransformer(max_p=150, d_model=128, d_mem=128).to(device)
-        # Only test primes for ce/rl
         test_moduli = [p for p in range(2, 150) if all(p % i != 0 for i in range(2, int(p**0.5) + 1))]
     
     model_path = None
@@ -56,12 +62,20 @@ def sweep_all(mode="ce", epoch="40000", universal=False):
         acc = get_accuracy(model, m, device)
         accuracies[m] = acc
     
-    label = "universal" if universal else mode
+    if sparse:
+        label = "sparse"
+        # Highlight which were training moduli
+        train_moduli = {2, 3, 5, 7, 11, 13, 19, 28, 37, 46, 55, 64, 73, 82, 91, 100, 112, 125, 138, 150, 163, 175, 188, 199}
+    else:
+        label = "universal" if universal else mode
+        train_moduli = set()
+    
     print(f"--- Accuracy Sweep for {label} {epoch} ---")
     sorted_acc = sorted(accuracies.items(), key=lambda x: x[1], reverse=True)
     for m, acc in sorted_acc:
         if acc > 0.05 or m > 120:
-            print(f"m={m:3d}: {acc:6.1%}")
+            marker = " [TRAIN]" if m in train_moduli else ""
+            print(f"m={m:3d}: {acc:6.1%}{marker}")
 
 def find_latest_checkpoint(mode):
     """Find the latest checkpoint for a given mode."""
@@ -90,9 +104,12 @@ def find_latest_checkpoint(mode):
     latest = max(checkpoints, key=get_epoch)
     return latest
 
-def find_latest_checkpoint(mode, universal=False):
+def find_latest_checkpoint(mode, universal=False, sparse=False):
     """Find the latest checkpoint for a given mode."""
-    if universal:
+    if sparse:
+        base_dir = Path("checkpoints/ce_sparse")
+        prefix = "sparse"
+    elif universal:
         base_dir = Path("checkpoints/ce_universal")
         prefix = "universal"
     else:
@@ -124,29 +141,31 @@ def find_latest_checkpoint(mode, universal=False):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Sweep accuracy across moduli for a checkpoint")
-    parser.add_argument("--mode", type=str, choices=["ce", "rl", "universal", "both", "all"], default="both",
-                        help="Which model to test (ce, rl, universal, both, or all)")
+    parser.add_argument("--mode", type=str, choices=["ce", "rl", "universal", "sparse", "both", "all"], default="both",
+                        help="Which model to test (ce, rl, universal, sparse, both, or all)")
     parser.add_argument("--epoch", type=str, default="latest",
                         help="Epoch to test (e.g., '40000', 'final', or 'latest')")
     args = parser.parse_args()
     
     if args.mode == "all":
-        modes = [("ce", False), ("rl", False), ("universal", True)]
+        modes = [("ce", False, False), ("rl", False, False), ("universal", True, False), ("sparse", False, True)]
     elif args.mode == "both":
-        modes = [("ce", False), ("rl", False)]
+        modes = [("ce", False, False), ("rl", False, False)]
     elif args.mode == "universal":
-        modes = [("universal", True)]
+        modes = [("universal", True, False)]
+    elif args.mode == "sparse":
+        modes = [("sparse", False, True)]
     else:
-        modes = [(args.mode, False)]
+        modes = [(args.mode, False, False)]
     
-    for mode, is_universal in modes:
+    for mode, is_universal, is_sparse in modes:
         if args.epoch == "latest":
-            checkpoint = find_latest_checkpoint(mode, universal=is_universal)
+            checkpoint = find_latest_checkpoint(mode, universal=is_universal, sparse=is_sparse)
             if checkpoint:
-                epoch = checkpoint.stem.replace(f"{mode}_", "").replace("universal_", "")
+                epoch = checkpoint.stem.replace(f"{mode}_", "").replace("universal_", "").replace("sparse_", "")
                 print(f"\nUsing latest checkpoint: {checkpoint}")
-                sweep_all(mode, epoch, universal=is_universal)
+                sweep_all(mode, epoch, universal=is_universal, sparse=is_sparse)
             else:
                 print(f"No checkpoints found for {mode}")
         else:
-            sweep_all(mode, args.epoch, universal=is_universal)
+            sweep_all(mode, args.epoch, universal=is_universal, sparse=is_sparse)
