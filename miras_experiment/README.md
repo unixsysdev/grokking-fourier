@@ -44,22 +44,22 @@ Our mechanistic analysis has revealed that the model is no longer "memorizing." 
 ### 1. Zero-Shot Extrapolation (The "Smoking Gun")
 Even for primes the model has **never seen in training (e.g., mod 101)**, it generates a perfectly coherent mathematical signal.
 
-![Nanda Signal Mod 101](analysis/nanda_signal_mod_101.png)
+![Nanda Signal Mod 101](/miras_experiment/analysis/nanda_signal_mod_101.png)
 - **What this means**: The smooth purple wave is the "Heartbeat" of the universal algorithm. 
 - **The Physics**: The neuron is calculating a Cosine similarity on a high-dimensional circle. By averaging over all $(a, b)$ pairs, we filter out the noise and see the pure **Modular Sum Signal**. 
 
 ### 2. Universal Hardware (Neuron Adaptation)
 We've proven that the RL model **re-uses its internal hardware** across different primes. 
 
-![Neuron 129 Adaptation](analysis/mechanics_rl/neuron_129_adaptation.png)
+![Neuron 129 Adaptation](/miras_experiment/analysis/mechanics_rl/neuron_129_adaptation.png)
 - **Neuron 129**: This specific worker acts as a "Frequency-Tuned Oscillator." 
 - **The Magic**: Whether the prime is 11, 17, or 23, the **same neuron** adjusts its firing rate to match the modulus. It "stretches" its sine wave based on the **SinPE hint** provided at token position 0.
 
 ### 3. Comparison of Analysis Perspectives
 | View | Filename | Question Answered |
 | :--- | :--- | :--- |
-| **Grokking View** | `nanda_signal_mod_101.png` | "Does the model understand the *rule* of Modulo 101?" |
-| **Adaptation View**| `neuron_129_adaptation.png` | "Is this neuron a *universal* worker?" |
+| **Grokking View** | [nanda_signal_mod_101.png](/miras_experiment/analysis/nanda_signal_mod_101.png) | "Does the model understand the *rule* of Modulo 101?" |
+| **Adaptation View**| [neuron_129_adaptation.png](/miras_experiment/analysis/mechanics_rl/neuron_129_adaptation.png) | "Is this neuron a *universal* worker?" |
 
 ---
 
