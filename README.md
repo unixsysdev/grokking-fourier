@@ -28,16 +28,18 @@ Analyzes Qwen3 0.6B for emergent Fourier structure — and finds it! **R² = 0.9
 
 Probes Qwen3 for Fourier structure in other cyclic domains: days, months, hours, alphabet.
 
-→ **[See emergent_structures/README.md](emergent_structures/README.md)** for full details
+**Key discovery**: The model has dedicated dimensions with near-perfect cyclic encodings for each domain!
 
-| Domain | Best Dim | R² |
-|--------|----------|-----|
-| **Days of week** | 125 | **0.9953** |
-| **Alphabet** | 238 | 0.9823 |
-| **Clock hours** | 725 | 0.9379 |
-| **Months** | 410 | 0.9288 |
+### 4. Polynomial vs Fourier Analysis (`emergent_structures/polynomial_results/`)
 
-**Key finding**: The model has dedicated dimensions with near-perfect cyclic encodings for each domain!
+A methodological deep-dive proving that the model's representations are truly cyclic (Fourier) rather than just linear or polynomial ramps.
+
+| Modulus | Best Dimension | Fourier $R^2$ | Linear/Poly $R^2$ | Result |
+|---------|----------------|---------------|-------------------|--------|
+| **mod 7** | Dim 35 | **0.9855** | 0.0256 (Lin) | **Fourier Win** |
+| **mod 17**| Dim 867 | **0.9664** | 0.1241 (Lin) | **Fourier Win** |
+
+→ **[See emergent_structures/detect_polynomial_functions.py](emergent_structures/detect_polynomial_functions.py)** for the robust detection methodology.
 
 ### 4. Prime Generalization Test (`emergent_structures/results_primes/`)
 

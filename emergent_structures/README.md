@@ -15,6 +15,18 @@ Probing for Fourier-like and other structured representations in pretrained LLMs
 | **Clock hours** | 725 | 0.9379 | k=1 |
 | **Months** | 410 | 0.9288 | k=1 |
 
+### 🔬 Fourier vs. Polynomial Detection (Robustness Test)
+
+To ensure the "Fourier" results aren't just artifacts of small sample sizes or linear ramps, we tested multiple function hypotheses:
+
+| Modulus | Dimension | Fourier $R^2$ | Linear $R^2$ | Quadratic $R^2$ | Winner |
+|---------|-----------|---------------|--------------|-----------------|--------|
+| **mod 7** | 35 | **0.9855** | 0.0256 | 0.0306 | **Fourier** |
+| **mod 11** | 112 | **0.9499** | 0.1542 | 0.1831 | **Fourier**|
+| **mod 17** | 867 | **0.9664** | 0.1241 | 0.1412 | **Fourier** |
+
+**Interpretation**: The near-zero linear $R^2$ values for Dimension 35 prove it is NOT a magnitude detector (ReLU-friendly). It has "abandoned" the linear number line for a periodic one that corresponds to the cyclic nature of modular addition.
+
 ### 🔬 Prime Generalization Test
 
 **Critical finding: Fourier circuits are SPECIALIZED, not dynamic!**
