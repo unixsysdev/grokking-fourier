@@ -37,12 +37,41 @@ As of December 21st, 07:55 AM, we have observed a major breakthrough using the *
 - `sweep_accuracy.py`: A new utility to measure accuracy across all primes [2, 113].
 - `analyze_miras_mechanics.py`: Updated to support Phase 2 SinPE models.
 
+## Deep Mechanics: The "Universal Oscillator" Breakthrough
+
+Our mechanistic analysis has revealed that the model is no longer "memorizing." It has constructed a **Universal Fourier Engine** that adapts to any prime value $p$ on-the-fly.
+
+### 1. Zero-Shot Extrapolation (The "Smoking Gun")
+Even for primes the model has **never seen in training (e.g., mod 101)**, it generates a perfectly coherent mathematical signal.
+
+![Nanda Signal Mod 101](/Users/marcel/WorkSpace/helm-charts/grokking-fourier/miras_experiment/analysis/nanda_signal_mod_101.png)
+- **What this means**: The smooth purple wave is the "Heartbeat" of the universal algorithm. 
+- **The Physics**: The neuron is calculating a Cosine similarity on a high-dimensional circle. By averaging over all $(a, b)$ pairs, we filter out the noise and see the pure **Modular Sum Signal**. 
+
+### 2. Universal Hardware (Neuron Adaptation)
+We've proven that the RL model **re-uses its internal hardware** across different primes. 
+
+![Neuron 129 Adaptation](/Users/marcel/WorkSpace/helm-charts/grokking-fourier/miras_experiment/analysis/mechanics_rl/neuron_129_adaptation.png)
+- **Neuron 129**: This specific worker acts as a "Frequency-Tuned Oscillator." 
+- **The Magic**: Whether the prime is 11, 17, or 23, the **same neuron** adjusts its firing rate to match the modulus. It "stretches" its sine wave based on the **SinPE hint** provided at token position 0.
+
+### 3. Comparison of Analysis Perspectives
+| View | Filename | Question Answered |
+| :--- | :--- | :--- |
+| **Grokking View** | `nanda_signal_mod_101.png` | "Does the model understand the *rule* of Modulo 101?" |
+| **Adaptation View**| `neuron_129_adaptation.png` | "Is this neuron a *universal* worker?" |
+
+---
+
 ## Usage
-To evaluate the models:
+To evaluate the latest progress:
 ```bash
-# General analysis
+# Analyze mathematical purity (SNR)
 python miras_experiment/analyze_miras_mechanics.py --mode ce
 
-# Exhaustive accuracy sweep
+# Visualize neuron adaptation across primes
+python miras_experiment/visualize_adaptation.py
+
+# Exhaustive accuracy sweep [2, 113]
 python miras_experiment/sweep_accuracy.py ce 40000
 ```
