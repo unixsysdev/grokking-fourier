@@ -43,5 +43,14 @@ We discovered that Qwen3 uses a **specialized trigonometric algorithm** to solve
 - `logit_lens_results/`: Heatmaps showing probability evolution across 28 layers.
 - `polynomial_test/`: Comparison plots of Fourier vs. Polynomial fits.
 
+### 4. Sparse Feature Decomposition (Superposition Test)
+**Question**: Is Dimension 8 doing two things at once?
+**Method**: Trained a Sparse Autoencoder (SAE) on Layer 7 with 4096 features.
+**Result**: **Feature 2822** emerged as a nearly-perfect Fourier oscillator ($R^2 = 0.9717, k=1$). 
+- *Discovery*: While the raw Dimension 8 has an $R^2$ of ~0.91, the SAE successfully extracted a **purer direction in activation space** that scores significantly higher. 
+- *The "Power" Feature*: **Feature 1834** showed a lower $R^2$ (0.83) but an extremely high activation magnitude (20.4). This suggests it might be the "powerhouse" that drives the math signal, while Feature 2822 provides the "precision" phase.
+
+→ **[See sae_analysis/README.md](sae_analysis/README.md)** for detailed feature plots.
+
 ---
 **Conclusion**: Qwen3 acts as a "Lookup Table of Fourier Circuits." It has not learned a universal modular arithmetic algorithm but has instead evolved multiple specialized trigonometric units for different numerical ranges.

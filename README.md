@@ -52,6 +52,12 @@ Causally proves that identified dimensions are responsible for the model's arith
 | Arith Acc | 28% | **12%** | **Causally Linked** |
 | Language PPL | 18.81 | 18.39 | **Specialized** |
 
+### 6. Sparse Feature Decomposition (`emergent_structures/sae_analysis/`)
+
+Investigates if dimensions are "multi-tasking" using Sparse Autoencoders (SAEs).
+
+**Key discovery**: Learned a **Feature 2822** with **$R^2 = 0.9717$**, proving that the Fourier logic is stored in discrete directions that are cleaner than the raw neurons.
+
 ### 4. Prime Generalization Test (`emergent_structures/results_primes/`)
 
 Tests whether Fourier dimensions generalize across different primes, or are specialized.
