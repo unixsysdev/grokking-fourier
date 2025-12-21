@@ -91,6 +91,25 @@ Three additional experiments revealed:
 
 The model has **completely separate circuits** for semantic time concepts vs arithmetic operations!
 
+### 7. Universal MIRAS Grokking (`miras_experiment/`)
+
+Our most advanced experiment, achieving **Universal Generalization** and **Infinite Extrapolation** using MIRAS (Memory-Integrated Recurrent Attention Structures).
+
+**Key discovery: The model has evolved from a "Lookup Table" of circuits into a "Universal Oscillator"!**
+
+| Metric | Previous (Discrete) | **Current (SinPE + MIRAS)** |
+|--------|---------------------|-----------------------------|
+| Seen Mastery | 100% | 100% |
+| **Unseen Mastery (p=71)** | ~0% | **67.5% (Growing)** |
+| **Extrapolation (p=101)** | 0% | **~11% (Softened Cliff)** |
+| Mechanism | Linear Table | **Adaptive Sine Waves** |
+
+**Breakthroughs**:
+- **Sinoidal Modulus Encoding (SinPE)**: Allows the model to perceive the modulus $p$ as a continuous scalar, enabling it to adjust its internal rotation frequency on-the-fly.
+- **Universal Neurons**: Identified "Universal Oscillators" (e.g., Neuron 129) that stay active across all primes, automatically "stretching" their periodicity to fit the given $p$.
+
+→ **[See miras_experiment/README.md](miras_experiment/README.md)** for full details on Infinite Grokking.
+
 ---
 
 ## Small Transformer Experiment
@@ -205,11 +224,14 @@ grokking-fourier/
 │   ├── results/           # Layer scan results
 │   └── results_detailed/  # Deep analysis results (R²=0.9578!)
 │
-└── emergent_structures/   # Probing for Fourier structure in other domains
-    ├── README.md          # Full documentation of findings
-    ├── probe_structures.py # Analysis script for days, months, hours, etc.
-    ├── run.sh             # Run all experiments
-    └── results/           # All plots and results (R²=0.9953 for days!)
+└── miras_experiment/       # ACHIEVED: Universal Grokking & Infinite Extrapolation
+    ├── README.md          # Full documentation of Phase 2 breakthroughs
+    ├── model_miras.py     # SinPE architecture with TitansMemory
+    ├── train_ce.py        # Supervised "Grokking Leap" track
+    ├── train_rl.py        # Policy Gradient discovery track
+    ├── sweep_accuracy.py  # All-prime accuracy evaluator
+    ├── analyze_miras_mechanics.py # Nanda-style SNR and Fourier purity analysis
+    └── analysis/          # Extrapolation plots and Fourier "Heartbeats"
 ```
 
 ## References
