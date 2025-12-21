@@ -52,5 +52,20 @@ We discovered that Qwen3 uses a **specialized trigonometric algorithm** to solve
 
 → **[See sae_analysis/README.md](sae_analysis/README.md)** for detailed feature plots.
 
+### 5. Reflection: Superposition vs. Purity
+**The "Interference" Discovery**: Our analysis showed that raw neurons (like Dim 8) had lower $R^2$ values (~0.91) than the expanded SAE features (~0.97).
+- **The Mechanic**: In a compressed model, the "Mathematics" circle and "Language" features are forced into the same physical space. This creates an **Interference Pattern**—the math circle is constantly being "pushed" or "pulled" away from its perfect theoretical equilibrium by the linguistic demands of the model.
+- **The Value of Expansion**: By expanding the feature space (4x expansion), we allowed the math circuit to "relax" into its own dedicated direction. This revealed that the model **internally knows the perfect solution**, but it is simply "smudged" in the physical hardware of the hidden layers.
+
+### 6. Attention Sparsity & MIRAS Logic
+**Question**: Does the model uses quadratic attention to "calculate" the result?
+**Method**: Analyzed attention weights across Fourier-critical layers (7, 9, 14).
+**Result**: 
+- **Uniform Modulus**: Attention to the modulus token ('7') is consistently low (~3-9%) and "flat."
+- **Anchor Sink**: ~50-60% of attention anchors on the first token ('2'), a typical "Sink" behavior.
+- **Interpretation**: This validates the **MIRAS/Titans** hypothesis. Attention isn't a "reasoning engine" here; it's a **Simple Routing Broadcast**. It pulls all tokens into the residual stream at the `=` position, and the **MLPs** (using the Fourier circuits we found) perform the actual $O(1)$ trigonometric rotation.
+
+→ **[See attention_analysis/](attention_analysis/)** for visualized maps.
+
 ---
 **Conclusion**: Qwen3 acts as a "Lookup Table of Fourier Circuits." It has not learned a universal modular arithmetic algorithm but has instead evolved multiple specialized trigonometric units for different numerical ranges.
