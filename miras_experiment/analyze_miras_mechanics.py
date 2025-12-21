@@ -92,14 +92,19 @@ def causal_ablation(model, p, target_neurons, device):
             b = torch.arange(p, device=device).repeat(p)
             p_v = torch.full_like(a, p)
             
-            # Manual forward matching UniversalFourierTransformer
+            # Manual forward matching UniversalFourierTransformer Phase 2 (SinPE)
             eq_token = model.max_p + 1
-            tokens = torch.stack([p_v, a, b, torch.full_like(a, eq_token)], dim=1)
-            x = model.token_embed(tokens) + model.pos_embed(torch.arange(4, device=device))
+            tokens_abc = torch.stack([a, b, torch.full_like(a, eq_token)], dim=1)
+            x_abc = model.token_embed(tokens_abc) + model.pos_embed(torch.arange(1, 4, device=device))
+            
+            p_enc = model.p_embedder(p_v).unsqueeze(1)
+            p_enc = p_enc + model.pos_embed(torch.zeros(1, dtype=torch.long, device=device))
+            x = torch.cat([p_enc, x_abc], dim=1)
             
             # 1. MIRAS Update
             z_p = model.memory_block(x[:, 0, :])
-            x[:, 0, :] = model.mem_to_hidden(z_p)
+            p_hidden = model.mem_to_hidden(z_p).unsqueeze(1)
+            x = torch.cat([p_hidden, x[:, 1:, :]], dim=1)
             
             # 2. Transformer layers
             for layer in [model.layer1, model.layer2]:
@@ -140,13 +145,24 @@ def causal_ablation(model, p, target_neurons, device):
 def analyze_attention_flow(model, p, device):
     """Measure how much '=' attends to 'p'."""
     model.eval()
-    tokens = torch.tensor([[p, 0, 0, model.max_p + 1]], device=device) # (a,b) arbitrary for p-flow
+    p_v = torch.tensor([p], device=device)
+    a_v = torch.tensor([0], device=device)
+    b_v = torch.tensor([0], device=device)
+    eq_token = model.max_p + 1
+    
+    tokens_abc = torch.tensor([[0, 0, eq_token]], device=device)
+    x_abc = model.token_embed(tokens_abc) + model.pos_embed(torch.arange(1, 4, device=device))
+    
+    p_enc = model.p_embedder(p_v).unsqueeze(1)
+    p_enc = p_enc + model.pos_embed(torch.zeros(1, dtype=torch.long, device=device))
+    x = torch.cat([p_enc, x_abc], dim=1)
+    
+    z_p = model.memory_block(x[:, 0, :])
+    p_hidden = model.mem_to_hidden(z_p).unsqueeze(1)
+    x = torch.cat([p_hidden, x[:, 1:, :]], dim=1)
     
     flow_stats = []
     with torch.no_grad():
-        x = model.token_embed(tokens) + model.pos_embed(torch.arange(4, device=device))
-        z_p = model.memory_block(x[:, 0, :])
-        x[:, 0, :] = model.mem_to_hidden(z_p)
         
         for i, layer in enumerate([model.layer1, model.layer2]):
             norm_x = layer.ln1(x)
@@ -166,7 +182,7 @@ def analyze_attention_flow(model, p, device):
             x = x + out
             x = x + layer.mlp(layer.ln2(x))
             
-    return np.array(flow_stats) # (layers, heads, 4)
+    return np.stack(flow_stats) # (layers, heads, 4)
 
 def calculate_fourier_snr_1d(activations, p):
     """
