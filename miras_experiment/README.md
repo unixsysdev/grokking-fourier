@@ -50,7 +50,7 @@ Our mechanistic analysis has revealed that the model is no longer "memorizing." 
 ### 1. Zero-Shot Extrapolation (The "Smoking Gun")
 Even for primes the model has **never seen in training (e.g., mod 101)**, it generates a perfectly coherent mathematical signal.
 
-![Nanda Signal Mod 101](/miras_experiment/analysis/nanda_signal_mod_101.png)
+![Nanda Signal Mod 101](/miras_experiment/analysis/old_results/nanda_signal_mod_101.png)
 - **What this means**: The smooth purple wave is the "Heartbeat" of the universal algorithm. 
 - **The Physics**: The neuron is calculating a Cosine similarity on a high-dimensional circle. By averaging over all $(a, b)$ pairs, we filter out the noise and see the pure **Modular Sum Signal**. 
 
