@@ -1,11 +1,13 @@
 # Emergent Structures in Qwen3
 
-Probing for Fourier-like and other structured- [Alphabet](probe_structures.py) - Alphabet cyclic structure
+Probing for Fourier-like and other structured representations in pretrained LLMs.
 
 ## 📖 In-Depth Technical Reports
 
 - **[Fourier Mechanistics Report](FOURIER_MECHANISTICS.md)** - Summary of circuits, causal ablation, and Logit Lens discoveries.
 - **[Ablation Results](ablation_results.json)** - Raw data from causal experiments.
+
+- [Alphabet](probe_structures.py) - Alphabet cyclic structure
 
 ## 🎯 Key Findings
 
