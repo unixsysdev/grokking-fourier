@@ -30,7 +30,13 @@ As of December 21st, 07:55 AM, we have observed a major breakthrough using the *
 - **Cliff Mitigation**: Accuracy on extrapolation primes (mod 101) has increased from **0% to ~11%**, proving that the SinPE architecture is successfully transmitting a universal mathematical signal.
 
 ### 2. RL Progress
-- The Policy Gradient model is taking longer to converge but shows a higher baseline stability for small primes. It is currently in the "Exploration Phase" with rising rewards.
+- The Policy Gradient model is taking longer to converge but shows a higher baseline stability for small primes. It is currently in the "Exploration Phase" with rising rewards. Its progress is monotonic (no regression observed).
+
+> [!WARNING]
+> **The Grokking Interference (Regression Alert)**
+> As the CE model masters larger primes (p=71), we have observed **accuracy drops** on medium primes (p=23, 37).
+> - **p=37**: Dropped from **76%** (Epoch 40k) $\rightarrow$ **46%** (Epoch 90k).
+> - **Cause**: Capacity Reallocation. The shared "Universal Oscillator" neurons are shifting their weights to accommodate larger prime periodicities, causing "blind spots" in the middle of the distribution.
 
 ### 3. Key Files
 - `train_ce.py` / `train_rl.py`: The twin training tracks.

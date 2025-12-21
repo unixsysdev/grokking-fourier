@@ -14,10 +14,25 @@ def get_accuracy(model, p, device):
         acc = (logits.argmax(dim=-1) == (a_vals + b_vals) % p).float().mean().item()
     return acc
 
-def sweep_all(mode="ce", epoch=40000):
+def sweep_all(mode="ce", epoch="40000"):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     base_check_dir = Path(f"miras_experiment/checkpoints/{mode}_sinpe")
-    model_path = base_check_dir / f"{mode}_e{epoch}.pt"
+    
+    # Try both naming conventions
+    path_options = [
+        base_check_dir / f"{mode}_{epoch}.pt",
+        base_check_dir / f"{mode}_e{epoch}.pt"
+    ]
+    
+    model_path = None
+    for p in path_options:
+        if p.exists():
+            model_path = p
+            break
+            
+    if model_path is None:
+        print(f"Error: Could not find checkpoint for {mode} {epoch} in {base_check_dir}")
+        return
     
     model = UniversalFourierTransformer(max_p=150, d_model=128, d_mem=128).to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -29,7 +44,7 @@ def sweep_all(mode="ce", epoch=40000):
         acc = get_accuracy(model, p, device)
         accuracies[p] = acc
         
-    print(f"--- Accuracy Sweep for {mode} e{epoch} ---")
+    print(f"--- Accuracy Sweep for {mode} {epoch} ---")
     sorted_acc = sorted(accuracies.items(), key=lambda x: x[1], reverse=True)
     for p, acc in sorted_acc:
         if acc > 0.1 or p in [13, 71, 73, 79]:
@@ -38,5 +53,5 @@ def sweep_all(mode="ce", epoch=40000):
 if __name__ == "__main__":
     import sys
     mode = sys.argv[1] if len(sys.argv) > 1 else "ce"
-    epoch = int(sys.argv[2]) if len(sys.argv) > 2 else 40000
+    epoch = sys.argv[2] if len(sys.argv) > 2 else "40000"
     sweep_all(mode, epoch)
