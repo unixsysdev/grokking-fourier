@@ -8,7 +8,7 @@ Paper: https://arxiv.org/abs/2301.05217
 
 ## Experiments
 
-This repository contains three experiments:
+This repository contains several core experiments:
 
 ### 1. Small Transformer Grokking (Root Directory)
 
@@ -58,7 +58,7 @@ Investigates if dimensions are "multi-tasking" using Sparse Autoencoders (SAEs).
 
 **Key discovery**: Learned a **Feature 2822** with **$R^2 = 0.9717$**, proving that the Fourier logic is stored in discrete directions that are cleaner than the raw neurons.
 
-### 4. Prime Generalization Test (`emergent_structures/results_primes/`)
+### 7. Prime Generalization Test (`emergent_structures/results_primes/`)
 
 Tests whether Fourier dimensions generalize across different primes, or are specialized.
 
@@ -74,7 +74,7 @@ Tests whether Fourier dimensions generalize across different primes, or are spec
 
 The model has a **lookup table of specialized circuits** for different primes, not a universal modular arithmetic unit.
 
-### 5. Deep Circuit Investigation (`emergent_structures/results_deep/`)
+### 8. Deep Circuit Investigation (`emergent_structures/results_deep/`)
 
 Three additional experiments revealed:
 
@@ -91,7 +91,7 @@ Three additional experiments revealed:
 
 The model has **completely separate circuits** for semantic time concepts vs arithmetic operations!
 
-### 7. Universal MIRAS Grokking (`miras_experiment/`)
+### 9. Universal MIRAS Grokking (`miras_experiment/`)
 
 Our most advanced experiment, achieving **Universal Generalization** and **Infinite Extrapolation** using MIRAS (Memory-Integrated Recurrent Attention Structures).
 
