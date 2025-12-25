@@ -1,16 +1,27 @@
 #!/bin/bash
 # Quick run script for the grokking Fourier experiment
+#
+# Supports: NVIDIA CUDA, AMD ROCm, Apple MPS, CPU
 
 set -e
 
 cd "$(dirname "$0")"
 
 # Activate virtual environment
-source venv/bin/activate
+if [ -d "venv" ]; then
+    source venv/bin/activate
+else
+    echo "Error: Virtual environment not found. Run ./setup_env.sh first."
+    exit 1
+fi
+
+# Show device info
+echo "=== Device Information ==="
+python device_utils.py
+echo ""
 
 echo "=== Step 1: Training the model ==="
 echo "Training on modular addition mod 113 (paper's main experiment)"
-echo "This will take a few minutes on M3..."
 echo ""
 
 python train.py \

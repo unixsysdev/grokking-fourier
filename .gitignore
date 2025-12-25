@@ -16,3 +16,11 @@ __pycache__/
 .idea/
 .vscode/
 *.sublime-*
+
+# Checkpoints (large files)
+**/checkpoints/*.pt
+**/checkpoints/*.json
+
+# Analysis outputs (regeneratable)
+**/analysis/compendium_*/
+**/analysis/*.json

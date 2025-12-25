@@ -350,8 +350,8 @@ def run_full_analysis(checkpoint_path: str, output_dir: str = "analysis"):
     print(f"Config: {config}")
     
     # Create model and load weights
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Using device: {device}")
+    from device_utils import get_device
+    device = get_device()
     
     model = OneLayerTransformer(
         p=config['p'],

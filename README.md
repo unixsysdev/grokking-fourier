@@ -179,18 +179,45 @@ This matches the paper's finding that smaller primes require higher weight decay
 
 ### Quick Start
 
+**For AMD Strix Halo (Recommended):**
+
+Uses the pre-built [ROCm 7 toolbox](https://github.com/kyuz0/amd-strix-halo-llm-finetuning) with everything configured:
+
 ```bash
-# Create virtual environment (first time only)
+# Create the toolbox (one-time setup)
+./setup_toolbox.sh
+
+# Enter the environment
+toolbox enter grokking-fourier
+
+# Install the one missing dependency
+pip install einops
+
+# Verify GPU is detected
+python device_utils.py
+```
+
+**For NVIDIA CUDA or Apple Silicon:**
+```bash
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate
-pip install torch numpy matplotlib tqdm
+
+# Install PyTorch for your platform
+pip install torch torchvision torchaudio  # CUDA/MPS auto-detected
+pip install -r requirements.txt
+```
+
+**Manual venv with ROCm (alternative):**
+```bash
+./setup_env.sh  # Creates venv with ROCm 6.2 PyTorch
 
 # Run the full experiment
 ./run.sh
 ```
 
 This will:
-1. Train the model (~12 minutes on M3 Mac)
+1. Train the model (~12 minutes on M3 Mac, faster on CUDA/ROCm)
 2. Run Fourier analysis
 3. Generate plots in `analysis_p113/`
 
@@ -233,6 +260,11 @@ After running, check the analysis folder for:
 ```
 grokking-fourier/
 ├── README.md              # This file
+├── requirements.txt       # Python dependencies (full list)
+├── requirements-toolbox.txt # Extra deps for toolbox (just einops)
+├── setup_toolbox.sh       # Setup Strix Halo toolbox (recommended)
+├── setup_env.sh           # Alternative: manual venv with ROCm
+├── device_utils.py        # Cross-platform GPU detection
 ├── model.py               # One-layer transformer architecture
 ├── train.py               # Training loop with AdamW + weight decay
 ├── analyze.py             # Fourier analysis and plotting

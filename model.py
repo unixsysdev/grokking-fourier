@@ -187,9 +187,10 @@ def train_test_split(p: int, train_frac: float, device: torch.device, seed: int 
 
 
 if __name__ == "__main__":
+    from device_utils import get_device
+    
     # Quick test
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Using device: {device}")
+    device = get_device()
     
     p = 53
     model = OneLayerTransformer(p=p).to(device)

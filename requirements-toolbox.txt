@@ -1,0 +1,4 @@
+# Extra dependencies for grokking-fourier
+# (The toolbox image already includes torch, numpy, matplotlib, tqdm, transformers, etc.)
+
+einops>=0.6.0

@@ -58,8 +58,8 @@ def train(
         output_dir: Directory for checkpoints
     """
     # Setup
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Using device: {device}")
+    from device_utils import get_device
+    device = get_device()
     print(f"Training modular addition mod {p}")
     print(f"Train fraction: {train_frac}, Total pairs: {p*p}")
     

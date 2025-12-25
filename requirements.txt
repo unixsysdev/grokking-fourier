@@ -1,0 +1,24 @@
+# Grokking Fourier - Requirements
+#
+# RECOMMENDED: Use the Strix Halo toolbox which has everything pre-configured:
+#   ./setup_toolbox.sh
+#   toolbox enter grokking-fourier
+#   pip install -r requirements-toolbox.txt  # Just einops
+#
+# ALTERNATIVE: Manual venv setup (see setup_env.sh)
+
+# Core dependencies
+numpy>=1.24.0
+matplotlib>=3.7.0
+einops>=0.6.0
+tqdm>=4.65.0
+
+# For Qwen3 analysis (optional, larger download)
+transformers>=4.40.0
+accelerate>=0.27.0
+
+# PyTorch - install separately for your platform:
+# ROCm 6.2: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.2
+# ROCm 7 (toolbox): already included
+# CUDA: pip install torch torchvision torchaudio
+# CPU/MPS: pip install torch torchvision torchaudio
