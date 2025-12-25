@@ -113,7 +113,29 @@ Three additional experiments revealed:
 
 The model has **completely separate circuits** for semantic time concepts vs arithmetic operations!
 
-### 9. Universal MIRAS Grokking (`miras_experiment/`)
+### 9. Phase Transition Visualizations (`phase_transition/`) ★ NEW ★
+
+Animated visualizations showing grokking as it happens — watch neural networks discover Fourier structure in real-time.
+
+#### Embedding Circle Emergence
+
+Token embeddings projected onto Fourier basis. After grokking, they snap into a perfect circle:
+
+![Circle Emergence](phase_transition/frames_circle/default/frame_00029.png)
+
+**Key insight**: Standard PCA misses the circle because it's not in the top principal components. Projecting onto the dominant Fourier frequency (cos/sin basis) reveals the structure.
+
+#### Sine Wave Emergence
+
+A single MLP neuron learning to compute sin((a+b) mod p):
+
+![Sine Emergence](phase_transition/frames_clean/default/frame_00029.png)
+
+**Videos available**: `circle_emergence.mp4`, `sine_clean.mp4`, `sine_emergence.mp4`
+
+→ **[See phase_transition/README.md](phase_transition/README.md)** for full details and usage.
+
+### 10. Universal MIRAS Grokking (`miras_experiment/`)
 
 Our most advanced experiment, achieving **True Generalization** via Sinusoidal Modulus Encoding (SinPE).
 
@@ -326,6 +348,21 @@ grokking-fourier/
 │   ├── causal_ablation.py
 │   ├── sae_analysis/      # Sparse autoencoder analysis
 │   └── results_*/         # Various analysis results
+│
+├── phase_transition/      # ★ Grokking Visualizations ★
+│   ├── README.md          # Documentation with video descriptions
+│   ├── train_with_metrics.py    # Training with detailed logging
+│   ├── generate_circle_frames.py # Fourier circle visualization
+│   ├── generate_clean_frames.py  # Single neuron sine visualization
+│   ├── generate_sine_frames.py   # Multi-neuron sine visualization
+│   ├── make_video.py      # Stitch frames into video
+│   ├── circle_emergence.mp4     # ★ Embedding circle video
+│   ├── sine_clean.mp4           # ★ Single neuron sine video
+│   ├── sine_emergence.mp4       # Multi-neuron sine video
+│   ├── frames_circle/     # Circle emergence frames
+│   ├── frames_clean/      # Clean sine frames
+│   ├── frames_sine/       # Multi-neuron frames
+│   └── phase_transition/checkpoints/  # Training checkpoints
 │
 └── miras_experiment/      # ★ MAIN EXPERIMENT: Universal Grokking ★
     ├── README.md          # Comprehensive documentation
