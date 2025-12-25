@@ -10,6 +10,28 @@ Paper: https://arxiv.org/abs/2301.05217
 
 This repository contains several core experiments:
 
+### 0. Addition Experiment (`addition_experiment/`) ★ NEW ★
+
+Trains a transformer to learn **multi-digit addition from scratch** using character-level tokenization.
+
+**The Challenge**: Can a small transformer learn the actual addition algorithm (positional value, carrying) rather than memorizing?
+
+| Metric | Result |
+|--------|--------|
+| Train Accuracy | 100% |
+| Interpolation (held-out pairs) | **96.2%** |
+| Extrapolation (6-digit, never seen) | 0% (expected) |
+
+**Key Analysis**: The compendium includes Fourier/periodic neuron analysis to detect if the model learns sinusoidal patterns similar to modular arithmetic grokking.
+
+```bash
+cd addition_experiment
+python train.py --n_epochs 50000
+python generate_compendium.py --periodic-only  # Quick Fourier analysis
+```
+
+→ **[See addition_experiment/README.md](addition_experiment/README.md)** for full details
+
 ### 1. Small Transformer Grokking (Root Directory)
 
 Trains a 1-layer transformer from scratch on modular addition and analyzes the learned Fourier algorithm.
@@ -272,6 +294,21 @@ grokking-fourier/
 ├── checkpoints_p113/      # Trained model (p=113, successful grokking)
 ├── analysis_p113/         # Fourier analysis plots
 ├── checkpoints_p71/       # Failed run (p=71)
+│
+├── addition_experiment/   # ★ Multi-digit addition learning ★
+│   ├── README.md          # Full documentation
+│   ├── model.py           # Encoder-Decoder Transformer
+│   ├── train.py           # Curriculum learning training
+│   ├── generate_compendium.py  # Analysis with periodic neurons
+│   ├── sweep_accuracy.py  # Accuracy testing
+│   ├── checkpoints/       # Model checkpoints
+│   └── analysis/          # Generated analysis plots
+│       └── compendium_e*/
+│           ├── periodic_neurons.png        # Sinusoidal patterns!
+│           ├── periodic_neurons_detail.png # Detailed view
+│           ├── fourier_embeddings.png
+│           └── ...
+│
 ├── checkpoints/           # Failed run (p=53)
 │
 ├── qwen3_analysis/        # Pretrained LLM analysis (modular arithmetic)

@@ -1,0 +1,81 @@
+{
+  "epoch": 20000,
+  "curriculum_phase": "Phase 3 (up to 4 digit numbers)",
+  "categories": {
+    "1d+1d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "2d+2d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "3d+3d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "4d+4d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "5d+5d": {
+      "accuracy": 0.45,
+      "correct": 90,
+      "total": 200
+    },
+    "6d+6d": {
+      "accuracy": 0.0,
+      "correct": 0,
+      "total": 200
+    },
+    "1d+3d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "1d+5d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "2d+4d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "2d+5d": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "3d+5d": {
+      "accuracy": 0.995,
+      "correct": 199,
+      "total": 200
+    },
+    "carries": {
+      "accuracy": 0.755,
+      "correct": 151,
+      "total": 200
+    },
+    "zeros": {
+      "accuracy": 1.0,
+      "correct": 200,
+      "total": 200
+    },
+    "small_exhaustive": {
+      "accuracy": 1.0,
+      "correct": 400,
+      "total": 400
+    }
+  },
+  "summary": {
+    "in_curriculum": 0.9777272727272728,
+    "not_yet_curriculum": 0.61125,
+    "extrapolation": 0.0
+  }
+}
